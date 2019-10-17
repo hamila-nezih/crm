@@ -16,6 +16,7 @@ import Menu from './components/Menu';
 
 
 class Root extends Component {
+
     render() {
         return (
             <div>
@@ -51,7 +52,8 @@ class Root extends Component {
                     <Route path='/client' component={Client} />
                     <Route path='/dashboard' component={Dashboard} />
                     <Route path='/nouveauClient' component={NouveauCliet} />
-                    <Route path='/detailClient' component={DetailClient} />
+                    <Route path='/detailClient/:clientId' component={DetailClient}
+                     />
                     <Route path='/collaborateur' component={Collaborateur} />
                     <Route path='/DetailCLB' component={DetailCLB} />
                     <Route path='/zone' component={Zone} />

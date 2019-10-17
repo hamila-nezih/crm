@@ -1,8 +1,14 @@
 import React, { Component } from 'react';
 import './Client.css';
 import API from "../utils/API";
-import axios from 'axios';
+import swal from 'sweetalert';
+import { Link } from 'react-router-dom'
+
 const $ = window.$;
+
+//import { NotificationContainer , NotificationManager} from 'react-notifications';
+
+
 
 
 class ContentClient extends Component {
@@ -14,59 +20,73 @@ class ContentClient extends Component {
       // Load async data from an inexistent endpoint.
       let userData = await API.get("/client ")
       .then(res => {
-        const persons = res.data;
-        console.log("persons",persons);
+        const client = res.data.client;
+        this.setState({clients:client});
+        console.log(client)
       });
     } catch (e) {
       console.log(`😱 Axios request failed: ${e}`);
     }
  
-    this.setState({
-      clients:
-        [
-          {
-            "id": "1",
-            "Nom": "GST",
-            "Tel": "73 000 522",
-            "Email": "exemple@gmail.com",
-            "Nature": "Grossiste",
-            "Adress": "10 Rue de sousse Msaken 4070",
-            "zone": "Sahel"
-          },
-          {
-            "id": "2",
-            "Nom": "IObird",
-            "Tel": "73 553 522",
-            "Email": "azerty@gmail.com",
-            "Nature": "détail",
-            "Adress": "10 Rue de sousse Msaken 4070",
-            "zone": "Sahel"
-          }
-        ]
-    });
-    $(function () {
-      $('.dataTables-example').DataTable({
+    const jqueryObj = $;
+    jqueryObj(function () {
+      jqueryObj('.dataTables-example').DataTable({
       });
 
     })
+  }
+  
+  handleDelete= (id) => { 
+    swal({
+      title: "êtes-vous sûr?",
+      text: "Une fois supprimer, vous ne pouvez plus le récupérer!",
+      icon: "warning",
+      buttons: true,
+      dangerMode: true,
+    })
+    .then((willDelete) => {
+      try {
+            if (willDelete)  { 
+               API.delete("/client/delete/"+id)
+                  .then(res => {
+                           swal("Le client a bien été supprimer!", {
+                                 icon: "success",
+                                });
+                            API.get("/client ")
+                               .then(res => {
+                                       const client = res.data.client;
+                                       this.setState({clients:client});
+                                        console.log(client)
+                              });
+                  })
+            } 
+            
+           
+      } catch (e) {
+        console.log(`😱 Axios request failed: ${e}`);
+      }
+    });
+    console.log("delete",id);
   }
   render() {
     let clients = this.state.clients.map((client) => {
       return (
         <tr className="gradeA" key={client.id}>
-          <td>{client.Nom}</td>
-          <td>{client.Tel}</td>
-          <td>{client.Email}</td>
-          <td>{client.Nature}</td>
-          <td className="center">{client.Adress}</td>
+          <td>{client.id}</td>
+          <td>{client.telephone}</td>
+          <td>{client.email}</td>
+          <td>{client.type}</td>
+          <td className="center">{client.adresse}</td>
           <td className="center">{client.zone}</td>
           <td align="center">
-            <a type="button" className="btn btn-outline btn-primary btn-xs" href="detailClient">
+         
+            <Link  type="button" className="btn btn-outline btn-primary btn-xs" to={`/detailClient/${client.id}`}>
               <span aria-hidden="true" > Détail</span>
-            </a>
-            <a type="button" className="btn btn-outline btn-danger btn-xs" href="detailClient" style={{ marginLeft: '15px' }}>
+            </Link >
+            <button  className="btn btn-outline btn-danger btn-xs demo4" 
+              onClick={() => this.handleDelete(client.id)} style={{ marginLeft: '15px' }}>
               <i className="fa fa-trash" aria-hidden="true"></i>
-            </a>
+            </button>
           </td>
         </tr>
       )
@@ -78,15 +98,16 @@ class ContentClient extends Component {
             <div className="ibox float-e-margins">
               <div className="ibox-title" style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <h5 >Liste des clients</h5>
-                <a type="button" class="btn btn-primary" href="nouveauClient" >Nouveau Client</a>
+                <a type="button" className="btn btn-primary" href="nouveauClient" >Nouveau Client</a>
               </div>
               <div className="ibox-content">
-                <div className="table">
+                <div className="table-responsive">
                   <table className="table table-striped table-bordered table-hover dataTables-example">
+                    
                     <thead>
                       <tr>
                         <th>Nom</th>
-                        <th>Tél</th>
+                        <th>Téléphone</th>
                         <th>Email</th>
                         <th>Nature client</th>
                         <th>Zone</th>

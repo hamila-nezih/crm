@@ -15,6 +15,7 @@ import DetailITV from './interventions/DetailITV';
 import Intervention from './interventions/Intervention';
 import AjouterITV from './interventions/AjouterITV';
 import Root from '../Root';
+import ContentContactClt from './ContentContactClt';
 
 
 

@@ -4,6 +4,7 @@ const $ = window.$;
 class ContentDB extends Component {
  
   render() {
+    
     return (
       <div>
            <div className="row wrapper border-bottom white-bg page-heading">

@@ -1,0 +1,35 @@
+.dataTables_filter{
+    text-align: end;
+   
+}
+.dataTables_info{
+display: none;
+}
+.dataTables_paginate {
+    text-align: end;
+
+}
+.ibox-content{
+    margin-bottom: 0%;
+    padding-bottom: 0%;
+}
+.m-b{
+    margin-bottom: 0%;
+    padding-bottom: 0%;
+}
+.float-e-margins{
+    margin-bottom: 0%;
+}
+.modal-body{
+    padding-bottom: 0%;
+}
+.hr-line-dashed{
+        margin-bottom: 1%;
+        margin-top: 1%;
+}
+.inmodal .modal-header{
+    padding:11px;
+}
+.ibox-content{
+    border-style: none;
+}

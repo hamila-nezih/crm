@@ -17,6 +17,7 @@ class ContentClient extends Component {
   }
   async componentDidMount() {
     try {
+     
       // Load async data from an inexistent endpoint.
       let userData = await API.get("/client ")
       .then(res => {
@@ -25,7 +26,7 @@ class ContentClient extends Component {
         console.log(client)
       });
     } catch (e) {
-      console.log(`😱 Axios request failed: ${e}`);
+      
     }
  
     const jqueryObj = $;
@@ -35,7 +36,9 @@ class ContentClient extends Component {
 
     })
   }
-  
+  handleDetail= (id) => { 
+    localStorage.setItem('idClient', id);
+  }
   handleDelete= (id) => { 
     swal({
       title: "êtes-vous sûr?",
@@ -80,7 +83,8 @@ class ContentClient extends Component {
           <td className="center">{client.zone}</td>
           <td align="center">
          
-            <Link  type="button" className="btn btn-outline btn-primary btn-xs" to={`/detailClient/${client.id}`}>
+            <Link  type="button" className="btn btn-outline btn-primary btn-xs" to={`/detailClient`}
+               onClick={() => this.handleDetail(client.id)} >
               <span aria-hidden="true" > Détail</span>
             </Link >
             <button  className="btn btn-outline btn-danger btn-xs demo4" 

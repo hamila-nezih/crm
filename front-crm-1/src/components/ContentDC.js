@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import './Client.css';
 import API from "../utils/API";
-import { BrowserRouter, Route, Link } from "react-router-dom";
+import swal from 'sweetalert';
 
 
 
@@ -13,28 +13,73 @@ class ContentDC extends Component {
     state = {
         client: [],
         types: [],
-        type:'',
+        type: '',
         zones: [],
-        zone:'',
+        zone: '',
         sousZones: [],
-        sousZone:'',
-        nom:'',
-        tel:'',
-        email:'',
-        adresse:''
+        sousZone: '',
+        nom: '',
+        tel: '',
+        email: '',
+        adresse: '',
+        idClient: '',
+        idContact: '',
+        contacts: [],
+        contact: [],
+        contactNom: '',
+        contactTel: '',
+        contactEmail: '',
+        contactPoste: '',
+        nouveaucontactNom: '',
+        nouveaucontactTel: '',
+        nouveaucontactEmail: '',
+        nouveaucontactPoste: '',
+        remarques: [],
+        remarque: '',
+        remarqueIdcollaborateur: '',
+        remarqueIdclient: '',
+        remarqueDescription: '',
+        remarqueTitre: '',
+
+
     }
     async componentDidMount() {
+        let idClient = localStorage.getItem('idClient');
+        this.setState({ idClient: idClient });
+
         try {
             // Load async data from an inexistent endpoint.
-            let userData = await API.get(`/client/` + 33)
+            let userData = await API.get(`/client/` + idClient)
                 .then(res => {
                     const client = res.data.client;
-                    this.setState({ client: client
-                                    , nom:client[0].intitule 
-                                    , tel:client[0].telephone
-                                    , email:client[0].email 
-                                    , adresse:client[0].adresse });
+                    this.setState({
+                        client: client
+                        , nom: client[0].intitule
+                        , tel: client[0].telephone
+                        , email: client[0].email
+                        , adresse: client[0].adresse
+                    });
                     console.log("client", client)
+                });
+            // Load Contact par id client .
+            await API.get(`/contact/client/` + idClient)
+                .then(res => {
+                    const contacts = res.data.contact;
+                    if (contacts != null)
+                        this.setState({
+                            contacts: contacts
+                        });
+                    console.log("contacts", contacts)
+                });
+            // Load remarque par id client .
+            await API.get(`/remarque/client/` + idClient)
+                .then(res => {
+                    const remarques = res.data.remarque;
+                    if (remarques != null)
+                        this.setState({
+                            remarques: remarques
+                        });
+                    console.log("remarques", remarques)
                 });
         } catch (e) {
             console.log(`😱 Axios request failed: ${e}`);
@@ -42,95 +87,454 @@ class ContentDC extends Component {
 
 
     }
-    typeChangeHandler = (event) => { 
-        console.log("event.target.value",event.target.value)
-        this.setState({type:event.target.value}); 
+    typeChangeHandler = (event) => {
+        console.log("event.target.value", event.target.value)
+        this.setState({ type: event.target.value });
     }
-     handleModifierClient = () => {
-         API.get("/typeclient ")
-        .then(res => {
-          const types = res.data.type;
-          this.setState({types:types,type:this.state.client[0].id_type});
-          console.log("typeclient,",types)
-        });
-         API.get("/zone ")
-           .then(res => {
-            const zones = res.data.zone;
-            this.setState({zones:zones,zone:this.state.client[0].id_zone});
-            console.log("zone,",zones)
-          });
-          const id=this.state.client[0].id_zone;         
-            API.get("/zone/souszone/parents/"+id)
-          .then(res => {
-            const sousZones = res.data.sous_zone;
-            this.setState({sousZones:sousZones,sousZone:sousZones[0].id});
-            console.log("sousZones get,",sousZones[0].id)
-          });
+    handleModifierClient = () => {
+        API.get("/typeclient ")
+            .then(res => {
+                const types = res.data.type;
+                this.setState({ types: types, type: this.state.client[0].id_type });
+                console.log("typeclient,", types)
+            });
+        API.get("/zone ")
+            .then(res => {
+                const zones = res.data.zone;
+                this.setState({ zones: zones, zone: this.state.client[0].id_zone });
+                console.log("zone,", zones)
+            });
+        const id = this.state.client[0].id_zone;
+        API.get("/zone/souszone/parents/" + id)
+            .then(res => {
+                const sousZones = res.data.sous_zone;
+                this.setState({ sousZones: sousZones, sousZone: sousZones[0].id });
+                console.log("sousZones get,", sousZones[0].id)
+            });
     }
     zoneChangeHandler = (event) => {
         console.log('this vaut :', event.target.value);
-        this.setState({zone:event.target.value});
-         API.get("/zone/souszone/parents/"+event.target.value)
-        .then(res => {
-          const sousZones = res.data.sous_zone;
-          if (sousZones != null)
-             this.setState({sousZones:sousZones,sousZone:sousZones[0].id});
-          else
-          this.setState({sousZones:[],sousZone:null});
-          console.log("sousZones,",sousZones)
-        });
-      }
-      sousZoneChangeHandler = (event) => {
+        this.setState({ zone: event.target.value });
+        API.get("/zone/souszone/parents/" + event.target.value)
+            .then(res => {
+                const sousZones = res.data.sous_zone;
+                if (sousZones != null)
+                    this.setState({ sousZones: sousZones, sousZone: sousZones[0].id });
+                else
+                    this.setState({ sousZones: [], sousZone: null });
+                console.log("sousZones,", sousZones)
+            });
+    }
+    sousZoneChangeHandler = (event) => {
         console.log('this vaut :', event.target.value);
-        this.setState({sousZone:event.target.value});
-        
-      }
-      nomChangeHandler = (event) => { this.setState({nom:event.target.value}); }
-      telChangeHandler = (event) =>  { this.setState({tel:event.target.value}); }
-      emailChangeHandler = (event) =>  { this.setState({email:event.target.value}); }
-      adresseChangeHandler = (event) =>  { this.setState({adresse:event.target.value}); }  
-      handleSubmit = (event) =>{
-        event.preventDefault();
-        console.log(this.state.nom,this.state.tel,this.state.email,this.state.adresse,this.state.type,this.state.sousZone);
-        const user = {
-                       idtype:this.state.type,                       
-                       intitule: this.state.nom,
-                       telephone: this.state.tel,
-                       email: this.state.email,
-                       idsouszone:this.state.sousZone,
-                       adresse: this.state.adresse
-                       
-                     };
-                     try {
-                           // Load async data from an inexistent endpoint.
-                           API.post("/update/client/33",user)
-                          .then(res => {         
-                            const client = res.data.client;
-                            this.setState({ client: client});
-                            console.log('😱 Axios request failed:',client);                       
-                          })          
-                        } catch (e) {
-                          console.log(`😱 Axios request failed: ${e}`);
-                        }
-        
-      }
-    render() {
+        this.setState({ sousZone: event.target.value });
 
+    }
+    nomChangeHandler = (event) => { this.setState({ nom: event.target.value }); }
+    telChangeHandler = (event) => { this.setState({ tel: event.target.value }); }
+    emailChangeHandler = (event) => { this.setState({ email: event.target.value }); }
+    adresseChangeHandler = (event) => { this.setState({ adresse: event.target.value }); }
+    handleSubmit = (event) => {
+        event.preventDefault();
+        console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
+        const user = {
+            idtype: this.state.type,
+            intitule: this.state.nom,
+            telephone: this.state.tel,
+            email: this.state.email,
+            idsouszone: this.state.sousZone,
+            adresse: this.state.adresse
+
+        };
+        try {
+            // Load async data from an inexistent endpoint.
+            API.post(`/update/client/${this.state.idClient}`, user)
+                .then(res => {
+                    const client = res.data.client;
+                    this.setState({ client: client });
+                    console.log('😱 Axios request failed:', client);
+                })
+        } catch (e) {
+            console.log(`😱 Axios request failed: ${e}`);
+        }
+
+    }
+
+
+    /***************************** contact********************************/
+    contactNomChangeHandler = (event) => { this.setState({ contactNom: event.target.value }); }
+    contactTelChangeHandler = (event) => { this.setState({ contactTel: event.target.value }); }
+    contactEmailChangeHandler = (event) => { this.setState({ contactEmail: event.target.value }); }
+    contactPostChangeHandler = (event) => { this.setState({ contactPoste: event.target.value }); }
+    handleSubmitContcat = (event) => {
+        const context = this;
+        event.preventDefault();
+        //console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
+        const contact = {
+            idclient: this.state.idClient,
+            intitule: this.state.contactNom,
+            poste: this.state.contactPoste,
+            telephone: this.state.contactTel,
+            email: this.state.contactEmail
+
+        };
+        try {
+            // Load async data from an inexistent endpoint.
+            API.post(`/update/contact/${this.state.idContact}`, contact)
+                .then(res => {
+                    API.get(`/contact/client/` + context.state.idClient)
+                        .then(res => {
+                            const contacts = res.data.contact;
+                            if (contacts != null)
+                                this.setState({
+                                    contacts: contacts
+                                });
+                            console.log("contacts", contacts)
+                        });
+                    console.log('😱 Axios request failed:', contact);
+                })
+        } catch (e) {
+            console.log(`😱 Axios request failed: ${e}`);
+        }
+
+    }
+    handleEditContact = (id) => {
+        this.setState({ idContact: id });
+        API.get(`/contact/` + id)
+            .then(res => {
+                const contact = res.data.contact;
+                this.setState({
+                    contact: contact,
+                    contactNom: contact[0].intitule,
+                    contactTel: contact[0].telephone,
+                    contactEmail: contact[0].email,
+                    contactPoste: contact[0].poste,
+                });
+                console.log("contact", contact)
+            });
+    }
+    handleDeleteContact = (id) => {
+        swal({
+            title: "êtes-vous sûr?",
+            text: "Une fois supprimer, vous ne pouvez plus le récupérer!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+            .then((willDelete) => {
+                try {
+                    if (willDelete) {
+                        API.delete("/contact/delete/" + id)
+                            .then(res => {
+                                swal("Le client a bien été supprimer!", {
+                                    icon: "success",
+                                });
+                                API.get(`/contact/client/` + this.state.idClient)
+                                    .then(res => {
+                                        const contact = res.data.contact;
+                                        console.log("handleDeleteContact", contact)
+                                        if (contact != null)
+                                            this.setState({ contacts: contact });
+                                        else
+                                            this.setState({ contacts: [] });
+
+                                    });
+                            })
+                    }
+
+
+                } catch (e) {
+                    console.log(`😱 Axios request failed: ${e}`);
+                }
+            });
+        console.log("delete", id);
+    }
+    /*******************nouveau contacts************** */
+    nouveaucontactNomChangeHandler = (event) => { this.setState({ nouveaucontactNom: event.target.value }); }
+    nouveaucontactTelChangeHandler = (event) => { this.setState({ nouveaucontactTel: event.target.value }); }
+    nouveaucontactEmailChangeHandler = (event) => { this.setState({ nouveaucontactEmail: event.target.value }); }
+    nouveaucontactPostChangeHandler = (event) => { this.setState({ nouveaucontactPoste: event.target.value }); }
+    handleSubmitNouveauContcat = (event) => {
+        const context = this;
+        event.preventDefault();
+        //console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
+        const contact = {
+            idclient: this.state.idClient,
+            intitule: this.state.nouveaucontactNom,
+            poste: this.state.nouveaucontactPoste,
+            telephone: this.state.nouveaucontactTel,
+            email: this.state.nouveaucontactEmail
+
+        };
+        try {
+            // Load async data from an inexistent endpoint.
+            API.post(`/contact`, contact)
+                .then(res => {
+                    API.get(`/contact/client/` + context.state.idClient)
+                        .then(res => {
+                            this.setState({
+                                nouveaucontactNom: '',
+                                nouveaucontactTel: '',
+                                nouveaucontactEmail: '',
+                                nouveaucontactPoste: ''
+                            })
+                            const contacts = res.data.contact;
+                            if (contacts != null)
+                                this.setState({
+                                    contacts: contacts
+                                });
+                            console.log("contacts", contacts)
+                        });
+                    console.log('😱 Axios request failed:', contact);
+                })
+        } catch (e) {
+            console.log(`😱 Axios request failed: ${e}`);
+        }
+
+    }
+    /*******************remarque************** */
+
+    nouveaucontactNomChangeHandler = (event) => { this.setState({ nouveaucontactNom: event.target.value }); }
+    nouveaucontactTelChangeHandler = (event) => { this.setState({ nouveaucontactTel: event.target.value }); }
+    nouveaucontactEmailChangeHandler = (event) => { this.setState({ nouveaucontactEmail: event.target.value }); }
+    nouveaucontactPostChangeHandler = (event) => { this.setState({ nouveaucontactPoste: event.target.value }); }
+    handleSubmitNouveauContcat = (event) => {
+        const context = this;
+        event.preventDefault();
+        //console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
+        const contact = {
+            idclient: this.state.idClient,
+            intitule: this.state.nouveaucontactNom,
+            poste: this.state.nouveaucontactPoste,
+            telephone: this.state.nouveaucontactTel,
+            email: this.state.nouveaucontactEmail
+
+        };
+        try {
+            // Load async data from an inexistent endpoint.
+            API.post(`/contact`, contact)
+                .then(res => {
+                    API.get(`/contact/client/` + context.state.idClient)
+                        .then(res => {
+                            this.setState({
+                                nouveaucontactNom: '',
+                                nouveaucontactTel: '',
+                                nouveaucontactEmail: '',
+                                nouveaucontactPoste: ''
+                            })
+                            const contacts = res.data.contact;
+                            if (contacts != null)
+                                this.setState({
+                                    contacts: contacts
+                                });
+                            console.log("contacts", contacts)
+                        });
+                    console.log('😱 Axios request failed:', contact);
+                })
+        } catch (e) {
+            console.log(`😱 Axios request failed: ${e}`);
+        }
+
+    }
+    handleEditRemarque = (id) => {
+        this.setState({ idContact: id });
+        API.get(`/remarque/` + id)
+            .then(res => {
+                const remarque = res.data.remarque;
+                this.setState({
+                    remarque: remarque,
+                    remarqueIdcollaborateur: remarque[0].idcollaborateur,
+                    remarqueIdclient: remarque[0].idclient,
+                    remarqueDescription: remarque[0].description,
+                    remarqueTitre: remarque[0].titre,
+                });
+                console.log("remarque", remarque)
+            });
+    }
+    /*******************ajouter remarque************** */
+     handleAjouterRemarque = (event) => {
+        
+            const context = this;
+            event.preventDefault();
+            //console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
+            const contact = {
+                idclient: this.state.idClient,
+                intitule: this.state.contactNom,
+                poste: this.state.contactPoste,
+                telephone: this.state.contactTel,
+                email: this.state.contactEmail
+    
+            };
+            try {
+                // Load async data from an inexistent endpoint.
+                API.post(`/update/contact/${this.state.idContact}`, contact)
+                    .then(res => {
+                        API.get(`/contact/client/` + context.state.idClient)
+                            .then(res => {
+                                const contacts = res.data.contact;
+                                if (contacts != null)
+                                    this.setState({
+                                        contacts: contacts
+                                    });
+                                console.log("contacts", contacts)
+                            });
+                        console.log('😱 Axios request failed:', contact);
+                    })
+            } catch (e) {
+                console.log(`😱 Axios request failed: ${e}`);
+            }
+    
+    
+     }
+    render() {
+        /******************* remarque ************** */
+        let ModifierRemarqueFormulaire = this.state.contact.map((contact) => {
+            return (
+                <form method="get" className="form-horizontal">
+                    <div className="form-group"><label className="col-sm-2 control-label">Nom & Prénom</label>
+                        <div className="col-sm-10">
+                            <input type="text" className="form-control" value={this.state.contactNom} onChange={this.contactNomChangeHandler} /></div>
+                    </div>
+                    <div className="hr-line-dashed" />
+                    <div className="form-group"><label className="col-sm-2 control-label">Poste occupé</label>
+                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.contactPoste} onChange={this.contactPostChangeHandler} />
+                        </div>
+                    </div>
+                    <div className="hr-line-dashed" />
+                    <div className="form-group"><label className="col-sm-2 control-label">Téléphone</label>
+                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.contactTel} onChange={this.contactTelChangeHandler} />
+                        </div>
+                    </div>
+                    <div className="hr-line-dashed" />
+
+                    <div className="form-group"><label className="col-sm-2 control-label">Email</label>
+                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.contactEmail} onChange={this.contactEmailChangeHandler} />
+                        </div>
+                    </div>
+                    <div className="hr-line-dashed" />
+                </form>)
+        });
+        let formRemarque = this.state.remarques.map((remarque) => {
+            return (
+                <li>
+                    <div>
+                        <small style={{ left: "5px" }}> {remarque.collaborateur}</small>
+                        <small>12:03:28 12-04-2014</small>
+                        <h4>{remarque.titre}</h4>
+                        <p>{remarque.description}</p>
+                        <a href="#" style={{ right: "25px" }} data-toggle="modal" data-target="#editRemarque"
+                            onClick={() => this.handleEditRemarque(remarque.id)}><i className="fa fa-pencil " /></a>
+                        <a href="#"><i className="fa fa-trash-o " /></a>
+                    </div>
+                </li>)
+        });
+                /*******************nouveau remarque************** */
+
+        let formNouveauRemarque =
+            <form method="get" className="form-horizontal">
+                <div className="form-group"><label className="col-sm-2 control-label">Titre </label>
+                    <div className="col-sm-10">
+                        <input type="text" className="form-control" value={this.state.nouveauRemarqueTitre} onChange={this.nouveaucontactNomChangeHandler} /></div>
+                </div>
+                <div className="hr-line-dashed" />
+                <div className="form-group"><label className="col-sm-2 control-label">Description</label>
+                    <div className="col-sm-10"><textarea className="form-control" value={this.state.nouveauRemarqueDescription}
+                                                  onChange={this.nouveaucontactPostChangeHandler} />
+                    </div>
+                </div>
+                
+                <div className="hr-line-dashed" />
+            </form>
+
+        /*******************contacts************** */
+
+        let formNouveauContact =
+            <form method="get" className="form-horizontal">
+                <div className="form-group"><label className="col-sm-2 control-label">Nom & Prénom</label>
+                    <div className="col-sm-10">
+                        <input type="text" className="form-control" value={this.state.nouveaucontactNom} onChange={this.nouveaucontactNomChangeHandler} /></div>
+                </div>
+                <div className="hr-line-dashed" />
+                <div className="form-group"><label className="col-sm-2 control-label">Poste occupé</label>
+                    <div className="col-sm-10"><input type="text" className="form-control" value={this.state.nouveaucontactPoste} onChange={this.nouveaucontactPostChangeHandler} />
+                    </div>
+                </div>
+                <div className="hr-line-dashed" />
+                <div className="form-group"><label className="col-sm-2 control-label">Téléphone</label>
+                    <div className="col-sm-10"><input type="text" className="form-control" value={this.state.nouveaucontactTel} onChange={this.nouveaucontactTelChangeHandler} />
+                    </div>
+                </div>
+                <div className="hr-line-dashed" />
+
+                <div className="form-group"><label className="col-sm-2 control-label">Email</label>
+                    <div className="col-sm-10"><input type="text" className="form-control" value={this.state.nouveaucontactEmail} onChange={this.nouveaucontactEmailChangeHandler} />
+                    </div>
+                </div>
+                <div className="hr-line-dashed" />
+            </form>
+
+        let contacts = this.state.contacts.map((contact) => {
+            return (
+                <tr className="gradeA">
+                    <td>{contact.intitule}</td>
+                    <td>{contact.poste}</td>
+                    <td>{contact.telephone}</td>
+                    <td className="center">{contact.email}</td>
+                    <td align="center">
+                        <button type="button" className="btn btn-outline btn-primary btn-xs"
+                            data-toggle="modal" data-target="#myModal2" onClick={() => this.handleEditContact(contact.id)}>
+                            <span>Edit</span>
+                        </button>
+                        <a href="#" className="btn btn-danger btn-xs btn-outline pull-right" >
+                            <i className="fa fa-trash" aria-hidden="true" onClick={() => this.handleDeleteContact(contact.id)}></i></a>
+                    </td>
+
+
+                </tr>
+            )
+        });
+        let formContact = this.state.contact.map((contact) => {
+            return (
+                <form method="get" className="form-horizontal">
+                    <div className="form-group"><label className="col-sm-2 control-label">Nom & Prénom</label>
+                        <div className="col-sm-10">
+                            <input type="text" className="form-control" value={this.state.contactNom} onChange={this.contactNomChangeHandler} /></div>
+                    </div>
+                    <div className="hr-line-dashed" />
+                    <div className="form-group"><label className="col-sm-2 control-label">Poste occupé</label>
+                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.contactPoste} onChange={this.contactPostChangeHandler} />
+                        </div>
+                    </div>
+                    <div className="hr-line-dashed" />
+                    <div className="form-group"><label className="col-sm-2 control-label">Téléphone</label>
+                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.contactTel} onChange={this.contactTelChangeHandler} />
+                        </div>
+                    </div>
+                    <div className="hr-line-dashed" />
+
+                    <div className="form-group"><label className="col-sm-2 control-label">Email</label>
+                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.contactEmail} onChange={this.contactEmailChangeHandler} />
+                        </div>
+                    </div>
+                    <div className="hr-line-dashed" />
+                </form>)
+        });
+        /*******************client************** */
         let zones = this.state.zones.map((zone) => {
             return (
-                  <option key={zone.id} value={zone.id}>{zone.intitule}</option>
-                )
+                <option key={zone.id} value={zone.id}>{zone.intitule}</option>
+            )
         });
-        let types = this.state.types.map((type) => {          
-            return (                
-                     <option key={type.id} value={type.id} >{type.intitule}</option>                 
-                  
-                )
+        let types = this.state.types.map((type) => {
+            return (
+                <option key={type.id} value={type.id} >{type.intitule}</option>
+
+            )
         });
         let sousZones = this.state.sousZones.map((zone) => {
             return (
-                  <option key={zone.id} value={zone.id}  >{zone.intitule}</option>
-                )
+                <option key={zone.id} value={zone.id}  >{zone.intitule}</option>
+            )
         });
         let formClient = this.state.client.map((client) => {
             return (
@@ -141,37 +545,37 @@ class ContentDC extends Component {
                     </div>
                     <div className="hr-line-dashed" />
                     <div className="form-group"><label className="col-sm-2 control-label">Tél</label>
-                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.tel} onChange={this.telChangeHandler}/>
+                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.tel} onChange={this.telChangeHandler} />
                         </div>
                     </div>
                     <div className="hr-line-dashed" />
                     <div className="form-group"><label className="col-sm-2 control-label">Email</label>
-                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.email} onChange={this.emailChangeHandler}/>
+                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.email} onChange={this.emailChangeHandler} />
                         </div>
                     </div>
                     <div className="hr-line-dashed" />
 
                     <div className="form-group"><label className="col-sm-2 control-label">Nature de client</label>
-                        <div className="col-sm-10"><select className="form-control m-b" name="account" value={this.state.type}onChange={this.typeChangeHandler}>
-                        {types}
+                        <div className="col-sm-10"><select className="form-control m-b" name="account" value={this.state.type} onChange={this.typeChangeHandler}>
+                            {types}
                         </select>
                         </div>
                     </div>
                     <div className="hr-line-dashed" />
                     <div className="form-group"><label className="col-sm-2 control-label">Adresse</label>
-                        <div className="col-sm-10"><input type="text" className="form-control" name="password"value={this.state.adresse} onChange={this.adresseChangeHandler} /></div>
+                        <div className="col-sm-10"><input type="text" className="form-control" name="password" value={this.state.adresse} onChange={this.adresseChangeHandler} /></div>
                     </div>
                     <div className="hr-line-dashed" />
                     <div className="form-group"><label className="col-sm-2 control-label">Zone</label>
                         <div className="col-sm-10"><select className="form-control m-b" name="account" value={this.state.zone} onChange={this.zoneChangeHandler}>
-                        {zones}
+                            {zones}
                         </select>
                         </div>
                     </div>
                     <div className="hr-line-dashed" />
                     <div className="form-group"><label className="col-sm-2 control-label">Sous zone</label>
                         <div className="col-sm-10"><select className="form-control m-b" name="account" onChange={this.sousZoneChangeHandler} value={this.state.sous_zone} >
-                               {sousZones}
+                            {sousZones}
                         </select>
                         </div>
                     </div>
@@ -179,34 +583,26 @@ class ContentDC extends Component {
                     <div className="hr-line-dashed" />
                 </form>)
         });
-        let nomClient = this.state.client.map((client) => {
-            return (
-                <dt>{client.intitule}</dt>
 
-            )
-        });
-        let natureClient = this.state.client.map((client) => {
-            return (
-
-                <dl className="dl-horizontal">
-                    <dt>Status:</dt> <dd><span className="label label-primary">{client.type}</span></dd>
-                </dl>
-
-            )
-        });
         let restClient = this.state.client.map((client) => {
             return (
 
                 <div className="row">
-                    <div className="col-lg-5">
+                    <div className="profile-image col-lg-2">
+                        <img src="img/a4.jpg" className="img-circle img-lg circle-border m-b-md" alt="profile" />
+                    </div>
+
+                    <div className="col-lg-4">
                         <dl className="dl-horizontal">
+                            <dl className="dl-horizontal"><dt>Nom:</dt> <dd>{client.intitule}</dd></dl>
                             <dt>Nature:</dt> <dd>{client.type}</dd>
                             <dt>Tél:</dt> <dd>{client.telephone} </dd>
                             <dt>Email:</dt> <dd> {client.email}</dd>
                         </dl>
                     </div>
-                    <div className="col-lg-7" id="cluster_info">
+                    <div className="col-lg-4" id="cluster_info">
                         <dl className="dl-horizontal">
+                            <dl className="dl-horizontal"><dt>Status:</dt> <dd><span className="label label-primary">{client.type}</span></dd></dl>
                             <dt>Zone:</dt> <dd>{client.zone}</dd>
                             <dt>Sous zone:</dt> <dd>{client.sous_zone}</dd>
                             <dt>Adress:</dt> <dd> {client.adresse}</dd>
@@ -227,7 +623,6 @@ class ContentDC extends Component {
                                 <div className="row">
                                     <div className="col-lg-12">
                                         <div className="m-b-md">
-                                            <a href="#" className="btn btn-primary btn-xs pull-right" style={{ marginLeft: "10px" }}>Nouveau contact </a>
                                             <a href="#" className="btn btn-danger btn-xs btn-outline pull-right" style={{ marginLeft: "10px" }}>
                                                 <i className="fa fa-trash" aria-hidden="true"></i></a>
                                             <button className="btn btn-primary btn-outline btn-xs pull-right" onClick={() => this.handleModifierClient()}
@@ -247,7 +642,7 @@ class ContentDC extends Component {
                                                                     <div className="ibox float-e-margins">
 
                                                                         <div className="ibox-content">
-                                                                        {formClient}
+                                                                            {formClient}
                                                                         </div>
                                                                     </div>
                                                                 </div>
@@ -256,7 +651,8 @@ class ContentDC extends Component {
                                                         </div>
                                                         <div className="modal-footer" style={{ textAlign: "end" }}>
                                                             <button type="button" className="btn btn-primary btn-outline" data-dismiss="modal">Annuler</button>
-                                                            <button type="button" className="btn btn-success btn-outline" data-dismiss="modal" onClick={this.handleSubmit}>Enregistrer</button>
+                                                            <button type="button" className="btn btn-success btn-outline" data-dismiss="modal"
+                                                                onClick={this.handleSubmit}>Enregistrer</button>
 
                                                         </div>
 
@@ -264,9 +660,130 @@ class ContentDC extends Component {
                                                 </div>
                                             </div>
 
-                                            {nomClient}
+                                            <div className="modal inmodal" id="nouveauContact" tabIndex={-1} role="dialog" aria-hidden="true">
+                                                <div className="modal-dialog">
+                                                    <div className="modal-content animated fadeIn">
+                                                        <div className="modal-header">
+                                                            <button type="button" className="close" data-dismiss="modal">
+                                                                <span aria-hidden="true">×</span><span className="sr-only">Annuler</span></button>
+                                                            <h4 className="modal-title">Ajouter un nouveau contact</h4>
+                                                        </div>
+                                                        <div className="modal-body">
+                                                            <div className="row">
+                                                                <div className="col-lg-12">
+                                                                    <div className="ibox float-e-margins">
+
+                                                                        <div className="ibox-content">
+                                                                            {formNouveauContact}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                        <div className="modal-footer" style={{ textAlign: "end" }}>
+                                                            <button type="button" className="btn btn-primary btn-outline" data-dismiss="modal">Annuler</button>
+                                                            <button type="button" className="btn btn-success btn-outline" data-dismiss="modal" onClick={this.handleSubmitNouveauContcat}>Enregistrer</button>
+
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="modal inmodal" id="editRemarque" tabIndex={-1} role="dialog" aria-hidden="true">
+                                                <div className="modal-dialog">
+                                                    <div className="modal-content animated fadeIn">
+                                                        <div className="modal-header">
+                                                            <button type="button" className="close" data-dismiss="modal">
+                                                                <span aria-hidden="true">×</span><span className="sr-only">Annuler</span></button>
+                                                            <h4 className="modal-title">Modifier remarques</h4>
+                                                        </div>
+                                                        <div className="modal-body">
+                                                            <div className="row">
+                                                                <div className="col-lg-12">
+                                                                    <div className="ibox float-e-margins">
+
+                                                                        <div className="ibox-content">
+                                                                            {ModifierRemarqueFormulaire}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                        <div className="modal-footer" style={{ textAlign: "end" }}>
+                                                            <button type="button" className="btn btn-primary btn-outline" data-dismiss="modal">Annuler</button>
+                                                            <button type="button" className="btn btn-success btn-outline" data-dismiss="modal" onClick={this.handleSubmitNouveauContcat}>Enregistrer</button>
+
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="modal inmodal" id="myModal2" tabIndex={-1} role="dialog" aria-hidden="true">
+                                                <div className="modal-dialog">
+                                                    <div className="modal-content animated fadeIn">
+                                                        <div className="modal-header">
+                                                            <button type="button" className="close" data-dismiss="modal">
+                                                                <span aria-hidden="true">×</span><span className="sr-only">Annuler</span></button>
+                                                            <h4 className="modal-title">Modifier client</h4>
+                                                        </div>
+                                                        <div className="modal-body">
+                                                            <div className="row">
+                                                                <div className="col-lg-12">
+                                                                    <div className="ibox float-e-margins">
+
+                                                                        <div className="ibox-content">
+                                                                            {formContact}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                        <div className="modal-footer" style={{ textAlign: "end" }}>
+                                                            <button type="button" className="btn btn-primary btn-outline" data-dismiss="modal">Annuler</button>
+                                                            <button type="button" className="btn btn-success btn-outline" data-dismiss="modal" onClick={this.handleSubmitContcat}>Enregistrer</button>
+
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="modal inmodal" id="nouveauRemarque" tabIndex={-1} role="dialog" aria-hidden="true">
+                                                <div className="modal-dialog">
+                                                    <div className="modal-content animated fadeIn">
+                                                        <div className="modal-header">
+                                                            <button type="button" className="close" data-dismiss="modal">
+                                                                <span aria-hidden="true">×</span><span className="sr-only">Annuler</span></button>
+                                                            <h4 className="modal-title">Ajouter uune nouvelle remarque</h4>
+                                                        </div>
+                                                        <div className="modal-body">
+                                                            <div className="row">
+                                                                <div className="col-lg-12">
+                                                                    <div className="ibox float-e-margins">
+
+                                                                        <div className="ibox-content">
+                                                                            {formNouveauRemarque}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+
+                                                            </div>
+                                                        </div>
+                                                        <div className="modal-footer" style={{ textAlign: "end" }}>
+                                                            <button type="button" className="btn btn-primary btn-outline" data-dismiss="modal">Annuler</button>
+                                                            <button type="button" className="btn btn-success btn-outline" data-dismiss="modal" onClick={this.handleAjouterRemarque}>Enregistrer</button>
+
+                                                        </div>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                          
+
                                         </div>
-                                        {natureClient}
+
                                     </div>
                                 </div>
                                 {restClient}
@@ -297,33 +814,17 @@ class ContentDC extends Component {
                                                                         <th>Poste occupé</th>
                                                                         <th>Tél</th>
                                                                         <th>Email</th>
-                                                                        <th></th>
+                                                                        <th>
+                                                                            <div className="m-b-md">
+                                                                                <a href="#" className="btn btn-primary btn-xs pull-center"
+                                                                                    onClick={() => this.handleModifierClient()}
+                                                                                    data-toggle="modal" data-target="#nouveauContact">Nouveau contact </a>
+                                                                            </div>
+                                                                        </th>
                                                                     </tr>
                                                                 </thead>
                                                                 <tbody>
-                                                                    <tr className="gradeA">
-
-                                                                        <td>Nom de contact</td>
-                                                                        <td>Directeur</td>
-                                                                        <td>
-                                                                            72 545 125
-                                                                                </td>
-                                                                        <td className="center">exemple@gmail.com</td>
-                                                                        <td align="center">
-                                                                            <a type="button" className="btn btn-outline btn-primary btn-xs" href="detailITV">
-                                                                                <span>Détail</span>
-                                                                            </a>
-                                                                            <a href="#" className="btn btn-danger btn-xs btn-outline pull-right" >
-                                                                                <i className="fa fa-trash" aria-hidden="true"></i></a>
-
-                                                                        </td>
-
-
-                                                                    </tr>
-
-
-
-
+                                                                    {contacts}
                                                                 </tbody>
                                                                 <tfoot>
 
@@ -335,7 +836,13 @@ class ContentDC extends Component {
                                                         <div className="row">
                                                             <div className="col-lg-12">
                                                                 <div className="wrapper wrapper-content animated fadeInUp">
+                                                                    <div className="m-b-md">
+                                                                        <a href="#" className="btn btn-primary btn-xs pull-right"
+                                                                            
+                                                                            data-toggle="modal" data-target="#nouveauRemarque">Nouveau remarque </a>
+                                                                    </div>                                                               
                                                                     <ul className="notes">
+                                                                        {formRemarque}
                                                                         <li>
                                                                             <div>
                                                                                 <small>12:03:28 12-04-2014</small>
@@ -343,7 +850,16 @@ class ContentDC extends Component {
                                                                                 <p>Livraison terminé.</p>
                                                                                 <a href="#"><i className="fa fa-trash-o " /></a>
                                                                             </div>
-                                                                        </li></ul></div></div></div>
+                                                                        </li>
+                                                                        <li>
+                                                                            <div>
+                                                                                <small>12:03:28 12-04-2014</small>
+                                                                                <h4>Livraison</h4>
+                                                                                <p>Livraison terminé.</p>
+                                                                                <a href="#"><i className="fa fa-trash-o " /></a>
+                                                                            </div>
+                                                                        </li>
+                                                                    </ul></div></div></div>
                                                     </div>
                                                     <div className="tab-pane " id="tab-3">
                                                         <div className="table">

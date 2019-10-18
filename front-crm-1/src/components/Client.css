@@ -33,3 +33,6 @@ display: none;
 .ibox-content{
     border-style: none;
 }
+img.circle-border {
+    border:none;
+}

@@ -2,15 +2,17 @@ import React, { Component } from 'react';
 import './Client.css';
 import API from "../utils/API";
 import swal from 'sweetalert';
-
-
-
+import Moment from 'react-moment';
+import { Redirect } from 'react-router-dom'
 class ContentDC extends Component {
 
     constructor(props) {
         super(props);
+        this.fileInput = React.createRef();
     }
     state = {
+        idCollaborateur: '17',
+        redirect: false,
         client: [],
         types: [],
         type: '',
@@ -22,6 +24,7 @@ class ContentDC extends Component {
         tel: '',
         email: '',
         adresse: '',
+        logo: '',
         idClient: '',
         idContact: '',
         contacts: [],
@@ -36,17 +39,29 @@ class ContentDC extends Component {
         nouveaucontactPoste: '',
         remarques: [],
         remarque: '',
+        idremarque: '',
         remarqueIdcollaborateur: '',
         remarqueIdclient: '',
         remarqueDescription: '',
         remarqueTitre: '',
 
 
+
+    }
+    setRedirect = () => {
+        this.setState({
+            redirect: true
+        })
+    }
+    renderRedirect = () => {
+        if (this.state.redirect) {
+            return <Redirect to='/client' />
+        }
     }
     async componentDidMount() {
+
         let idClient = localStorage.getItem('idClient');
         this.setState({ idClient: idClient });
-
         try {
             // Load async data from an inexistent endpoint.
             let userData = await API.get(`/client/` + idClient)
@@ -58,6 +73,7 @@ class ContentDC extends Component {
                         , tel: client[0].telephone
                         , email: client[0].email
                         , adresse: client[0].adresse
+                        , logo: client[0].logo
                     });
                     console.log("client", client)
                 });
@@ -88,9 +104,11 @@ class ContentDC extends Component {
 
     }
     typeChangeHandler = (event) => {
+
         console.log("event.target.value", event.target.value)
         this.setState({ type: event.target.value });
     }
+    
     handleModifierClient = () => {
         API.get("/typeclient ")
             .then(res => {
@@ -110,6 +128,37 @@ class ContentDC extends Component {
                 const sousZones = res.data.sous_zone;
                 this.setState({ sousZones: sousZones, sousZone: sousZones[0].id });
                 console.log("sousZones get,", sousZones[0].id)
+            });
+    }
+    handleDelete = () => {
+        swal({
+            title: "êtes-vous sûr?",
+            text: "Une fois supprimer, vous ne pouvez plus le récupérer!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+            .then((willDelete) => {
+
+                try {
+                    if (willDelete) {
+                        API.delete("/client/delete/" + this.state.idClient)
+                            .then(res => {
+
+                                swal("Le client a bien été supprimer!", {
+                                    icon: "success",
+                                });
+                                this.setRedirect();
+                                console.log(`😱 Axios request failed delete client`);
+
+
+                            })
+                    }
+
+                } catch (e) {
+
+                    console.log(`😱 Axios request failed: ${e}`);
+                }
             });
     }
     zoneChangeHandler = (event) => {
@@ -135,15 +184,16 @@ class ContentDC extends Component {
     emailChangeHandler = (event) => { this.setState({ email: event.target.value }); }
     adresseChangeHandler = (event) => { this.setState({ adresse: event.target.value }); }
     handleSubmit = (event) => {
-        event.preventDefault();
-        console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
+        event.preventDefault();      
+        //console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone,`${this.fileInput.current.files[0].name}`);
         const user = {
             idtype: this.state.type,
             intitule: this.state.nom,
-            telephone: this.state.tel,
+            telephone: "this.state.tel",
             email: this.state.email,
             idsouszone: this.state.sousZone,
-            adresse: this.state.adresse
+            adresse: this.state.adresse,
+            logo :"popo"
 
         };
         try {
@@ -152,7 +202,7 @@ class ContentDC extends Component {
                 .then(res => {
                     const client = res.data.client;
                     this.setState({ client: client });
-                    console.log('😱 Axios request failed:', client);
+                    console.log('😱 Axios request client:', client);
                 })
         } catch (e) {
             console.log(`😱 Axios request failed: ${e}`);
@@ -294,155 +344,184 @@ class ContentDC extends Component {
     }
     /*******************remarque************** */
 
-    nouveaucontactNomChangeHandler = (event) => { this.setState({ nouveaucontactNom: event.target.value }); }
-    nouveaucontactTelChangeHandler = (event) => { this.setState({ nouveaucontactTel: event.target.value }); }
-    nouveaucontactEmailChangeHandler = (event) => { this.setState({ nouveaucontactEmail: event.target.value }); }
-    nouveaucontactPostChangeHandler = (event) => { this.setState({ nouveaucontactPoste: event.target.value }); }
-    handleSubmitNouveauContcat = (event) => {
-        const context = this;
-        event.preventDefault();
-        //console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
-        const contact = {
-            idclient: this.state.idClient,
-            intitule: this.state.nouveaucontactNom,
-            poste: this.state.nouveaucontactPoste,
-            telephone: this.state.nouveaucontactTel,
-            email: this.state.nouveaucontactEmail
+    nouveauRemarqueTitreHandler = (event) => { this.setState({ nouveauRemarqueTitre: event.target.value }); }
+    nouveauRemarqueDescriptionChangeHandler = (event) => { this.setState({ nouveauRemarqueDescription: event.target.value }); }
+    /*******************modifier remarque************** */
 
-        };
-        try {
-            // Load async data from an inexistent endpoint.
-            API.post(`/contact`, contact)
-                .then(res => {
-                    API.get(`/contact/client/` + context.state.idClient)
-                        .then(res => {
-                            this.setState({
-                                nouveaucontactNom: '',
-                                nouveaucontactTel: '',
-                                nouveaucontactEmail: '',
-                                nouveaucontactPoste: ''
-                            })
-                            const contacts = res.data.contact;
-                            if (contacts != null)
-                                this.setState({
-                                    contacts: contacts
-                                });
-                            console.log("contacts", contacts)
-                        });
-                    console.log('😱 Axios request failed:', contact);
-                })
-        } catch (e) {
-            console.log(`😱 Axios request failed: ${e}`);
-        }
+    modifierRemarqueTitreHandler = (event) => { this.setState({ remarqueTitre: event.target.value }); }
+    modifierRemarqueDescriptionChangeHandler = (event) => { this.setState({ remarqueDescription: event.target.value }); }
 
-    }
     handleEditRemarque = (id) => {
-        this.setState({ idContact: id });
+        this.setState({ idremarque: id });
         API.get(`/remarque/` + id)
             .then(res => {
                 const remarque = res.data.remarque;
                 this.setState({
                     remarque: remarque,
+
                     remarqueIdcollaborateur: remarque[0].idcollaborateur,
                     remarqueIdclient: remarque[0].idclient,
                     remarqueDescription: remarque[0].description,
                     remarqueTitre: remarque[0].titre,
                 });
-                console.log("remarque", remarque)
             });
+        console.log("bonjour")
     }
     /*******************ajouter remarque************** */
-     handleAjouterRemarque = (event) => {
-        
-            const context = this;
-            event.preventDefault();
-            //console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
-            const contact = {
-                idclient: this.state.idClient,
-                intitule: this.state.contactNom,
-                poste: this.state.contactPoste,
-                telephone: this.state.contactTel,
-                email: this.state.contactEmail
-    
-            };
-            try {
-                // Load async data from an inexistent endpoint.
-                API.post(`/update/contact/${this.state.idContact}`, contact)
-                    .then(res => {
-                        API.get(`/contact/client/` + context.state.idClient)
+    handleAjouterRemarque = (event) => {
+
+        const context = this;
+        event.preventDefault();
+        //console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
+        const remarque = {
+            titre: this.state.nouveauRemarqueTitre,
+            description: this.state.nouveauRemarqueDescription,
+            idclient: this.state.idClient,
+            idcollaborateur: this.state.idCollaborateur
+        };
+        try {
+            // Load async data from an inexistent endpoint.
+            API.post(`/remarque`, remarque)
+                .then(res => {
+                    API.get(`/remarque/client/` + this.state.idClient)
+                        .then(res => {
+                            const remarques = res.data.remarque;
+                            if (remarques != null)
+                                this.setState({
+                                    remarques: remarques,
+                                    nouveauRemarqueTitre: "",
+                                    nouveauRemarqueDescription: ""
+                                });
+                            console.log("remarques", remarques)
+                        });
+                })
+        } catch (e) {
+            console.log(`😱 Axios request failed: ${e}`);
+        }
+
+
+    }
+    /*******************modifier remarque************** */
+
+    handleSubmitModifierRemarque = (event) => {
+
+        const context = this;
+        event.preventDefault();
+        //console.log(this.state.nom, this.state.tel, this.state.email, this.state.adresse, this.state.type, this.state.sousZone);
+        const remarque = {
+            titre: this.state.remarqueTitre,
+            description: this.state.remarqueDescription,
+            idclient: this.state.idClient,
+            idcollaborateur: this.state.idCollaborateur
+        };
+        try {
+            // Load async data from an inexistent endpoint.
+            API.post(`/remarque/update/${context.state.idremarque}`, remarque)
+                .then(res => {
+                    API.get(`/remarque/client/` + this.state.idClient)
+                        .then(res => {
+                            const remarques = res.data.remarque;
+                            if (remarques != null)
+                                this.setState({
+                                    remarques: remarques
+                                });
+                            console.log("remarques", remarques)
+                        });
+                })
+        } catch (e) {
+            console.log(`😱 Axios request failed: ${e}`);
+        }
+
+
+    }
+
+    /*******************modifier remarque************** */
+
+    handleDeleteRemarque = (id) => {
+        swal({
+            title: "êtes-vous sûr?",
+            text: "Une fois supprimer, vous ne pouvez plus le récupérer!",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        })
+            .then((willDelete) => {
+                try {
+                    if (willDelete) {
+                        API.delete("/remarque/delete/" + id)
                             .then(res => {
-                                const contacts = res.data.contact;
-                                if (contacts != null)
-                                    this.setState({
-                                        contacts: contacts
+                                swal("Le client a bien été supprimer!", {
+                                    icon: "success",
+                                });
+                                API.get(`/remarque/client/` + this.state.idClient)
+                                    .then(res => {
+                                        const remarques = res.data.remarque;
+                                        console.log("handleDeleteContact", remarques)
+                                        if (remarques != null)
+                                            this.setState({ remarques: remarques });
+                                        else
+                                            this.setState({ remarques: [] });
+
                                     });
-                                console.log("contacts", contacts)
-                            });
-                        console.log('😱 Axios request failed:', contact);
-                    })
-            } catch (e) {
-                console.log(`😱 Axios request failed: ${e}`);
-            }
-    
-    
-     }
+                            })
+                    }
+
+
+                } catch (e) {
+                    console.log(`😱 Axios request failed: ${e}`);
+                }
+            });
+        console.log("delete", id);
+    }
     render() {
         /******************* remarque ************** */
-        let ModifierRemarqueFormulaire = this.state.contact.map((contact) => {
-            return (
-                <form method="get" className="form-horizontal">
-                    <div className="form-group"><label className="col-sm-2 control-label">Nom & Prénom</label>
-                        <div className="col-sm-10">
-                            <input type="text" className="form-control" value={this.state.contactNom} onChange={this.contactNomChangeHandler} /></div>
+        let ModifierRemarqueFormulaire =
+            <form method="get" className="form-horizontal">
+                <div className="form-group"><label className="col-sm-2 control-label">Titre </label>
+                    <div className="col-sm-10">
+                        <input type="text" className="form-control" value={this.state.remarqueTitre} onChange={this.modifierRemarqueTitreHandler} /></div>
+                </div>
+                <div className="hr-line-dashed" />
+                <div className="form-group"><label className="col-sm-2 control-label">Description</label>
+                    <div className="col-sm-10"><textarea className="form-control" value={this.state.remarqueDescription}
+                        onChange={this.modifierRemarqueDescriptionChangeHandler} />
                     </div>
-                    <div className="hr-line-dashed" />
-                    <div className="form-group"><label className="col-sm-2 control-label">Poste occupé</label>
-                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.contactPoste} onChange={this.contactPostChangeHandler} />
-                        </div>
-                    </div>
-                    <div className="hr-line-dashed" />
-                    <div className="form-group"><label className="col-sm-2 control-label">Téléphone</label>
-                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.contactTel} onChange={this.contactTelChangeHandler} />
-                        </div>
-                    </div>
-                    <div className="hr-line-dashed" />
+                </div>
 
-                    <div className="form-group"><label className="col-sm-2 control-label">Email</label>
-                        <div className="col-sm-10"><input type="text" className="form-control" value={this.state.contactEmail} onChange={this.contactEmailChangeHandler} />
-                        </div>
-                    </div>
-                    <div className="hr-line-dashed" />
-                </form>)
-        });
+                <div className="hr-line-dashed" />
+            </form>
+
         let formRemarque = this.state.remarques.map((remarque) => {
             return (
                 <li>
                     <div>
                         <small style={{ left: "5px" }}> {remarque.collaborateur}</small>
-                        <small>12:03:28 12-04-2014</small>
+                        <small><Moment format="YYYY/MM/DD HH:MM">
+                            {remarque.date_creation.date}
+                        </Moment></small>
                         <h4>{remarque.titre}</h4>
                         <p>{remarque.description}</p>
                         <a href="#" style={{ right: "25px" }} data-toggle="modal" data-target="#editRemarque"
                             onClick={() => this.handleEditRemarque(remarque.id)}><i className="fa fa-pencil " /></a>
-                        <a href="#"><i className="fa fa-trash-o " /></a>
+                        <a href="#" onClick={() => this.handleDeleteRemarque(remarque.id)} ><i className="fa fa-trash-o " /></a>
                     </div>
                 </li>)
         });
-                /*******************nouveau remarque************** */
+        /*******************nouveau remarque************** */
 
         let formNouveauRemarque =
             <form method="get" className="form-horizontal">
                 <div className="form-group"><label className="col-sm-2 control-label">Titre </label>
                     <div className="col-sm-10">
-                        <input type="text" className="form-control" value={this.state.nouveauRemarqueTitre} onChange={this.nouveaucontactNomChangeHandler} /></div>
+                        <input type="text" className="form-control" value={this.state.nouveauRemarqueTitre} onChange={this.nouveauRemarqueTitreHandler} /></div>
                 </div>
                 <div className="hr-line-dashed" />
                 <div className="form-group"><label className="col-sm-2 control-label">Description</label>
                     <div className="col-sm-10"><textarea className="form-control" value={this.state.nouveauRemarqueDescription}
-                                                  onChange={this.nouveaucontactPostChangeHandler} />
+                        onChange={this.nouveauRemarqueDescriptionChangeHandler} />
                     </div>
                 </div>
-                
+
                 <div className="hr-line-dashed" />
             </form>
 
@@ -520,6 +599,7 @@ class ContentDC extends Component {
                 </form>)
         });
         /*******************client************** */
+
         let zones = this.state.zones.map((zone) => {
             return (
                 <option key={zone.id} value={zone.id}>{zone.intitule}</option>
@@ -543,6 +623,14 @@ class ContentDC extends Component {
                         <div className="col-sm-10">
                             <input type="text" className="form-control" value={this.state.nom} onChange={this.nomChangeHandler} /></div>
                     </div>
+                     <div className=" form-group " data-provides="fileinput">
+                          <label className="col-sm-2 control-label">Nom</label>   
+                          <div className="col-sm-10">                   
+                                  <input className="form-control" type="file" name="..."ref={this.fileInput} />
+                          </div>   
+                    </div>
+
+
                     <div className="hr-line-dashed" />
                     <div className="form-group"><label className="col-sm-2 control-label">Tél</label>
                         <div className="col-sm-10"><input type="text" className="form-control" value={this.state.tel} onChange={this.telChangeHandler} />
@@ -588,8 +676,14 @@ class ContentDC extends Component {
             return (
 
                 <div className="row">
+                    {this.renderRedirect()}
+
                     <div className="profile-image col-lg-2">
-                        <img src="img/a4.jpg" className="img-circle img-lg circle-border m-b-md" alt="profile" />
+                        {this.state.logo.length > 0 ?
+                            <img src={`http://172.0.1.160:8080/Startec/web/uploads/documents/${this.state.logo}`} className="img-circle img-lg circle-border m-b-md" alt="profile" />
+                            :
+                            <img src="img/image-profil.jpg" className="img-circle img-lg circle-border m-b-md" alt="profile" />
+                        }
                     </div>
 
                     <div className="col-lg-4">
@@ -623,7 +717,7 @@ class ContentDC extends Component {
                                 <div className="row">
                                     <div className="col-lg-12">
                                         <div className="m-b-md">
-                                            <a href="#" className="btn btn-danger btn-xs btn-outline pull-right" style={{ marginLeft: "10px" }}>
+                                            <a href="#" className="btn btn-danger btn-xs btn-outline pull-right" style={{ marginLeft: "10px" }} onClick={() => this.handleDelete()}>
                                                 <i className="fa fa-trash" aria-hidden="true"></i></a>
                                             <button className="btn btn-primary btn-outline btn-xs pull-right" onClick={() => this.handleModifierClient()}
                                                 data-toggle="modal" data-target="#myModal4">
@@ -696,7 +790,7 @@ class ContentDC extends Component {
                                                         <div className="modal-header">
                                                             <button type="button" className="close" data-dismiss="modal">
                                                                 <span aria-hidden="true">×</span><span className="sr-only">Annuler</span></button>
-                                                            <h4 className="modal-title">Modifier remarques</h4>
+                                                            <h4 className="modal-title">Modifier la remarque</h4>
                                                         </div>
                                                         <div className="modal-body">
                                                             <div className="row">
@@ -713,7 +807,7 @@ class ContentDC extends Component {
                                                         </div>
                                                         <div className="modal-footer" style={{ textAlign: "end" }}>
                                                             <button type="button" className="btn btn-primary btn-outline" data-dismiss="modal">Annuler</button>
-                                                            <button type="button" className="btn btn-success btn-outline" data-dismiss="modal" onClick={this.handleSubmitNouveauContcat}>Enregistrer</button>
+                                                            <button type="button" className="btn btn-success btn-outline" data-dismiss="modal" onClick={this.handleSubmitModifierRemarque}>Enregistrer</button>
 
                                                         </div>
 
@@ -780,7 +874,6 @@ class ContentDC extends Component {
                                                     </div>
                                                 </div>
                                             </div>
-                                          
 
                                         </div>
 
@@ -795,9 +888,9 @@ class ContentDC extends Component {
                                                 <div className="panel-options">
                                                     <ul className="nav nav-tabs">
                                                         <li className="active"><a href="#tab-1" data-toggle="tab">Contacts</a></li>
-                                                        <li className><a href="#tab-2" data-toggle="tab">Commandes</a></li>
-                                                        <li className><a href="#tab-3" data-toggle="tab">Interventions</a></li>
-                                                        <li className><a href="#tab-4" data-toggle="tab">Remarques</a></li>
+                                                        <li ><a href="#tab-2" data-toggle="tab">Commandes</a></li>
+                                                        <li ><a href="#tab-3" data-toggle="tab">Interventions</a></li>
+                                                        <li ><a href="#tab-4" data-toggle="tab">Remarques</a></li>
 
 
                                                     </ul>
@@ -838,27 +931,11 @@ class ContentDC extends Component {
                                                                 <div className="wrapper wrapper-content animated fadeInUp">
                                                                     <div className="m-b-md">
                                                                         <a href="#" className="btn btn-primary btn-xs pull-right"
-                                                                            
+
                                                                             data-toggle="modal" data-target="#nouveauRemarque">Nouveau remarque </a>
-                                                                    </div>                                                               
+                                                                    </div>
                                                                     <ul className="notes">
                                                                         {formRemarque}
-                                                                        <li>
-                                                                            <div>
-                                                                                <small>12:03:28 12-04-2014</small>
-                                                                                <h4>Livraison</h4>
-                                                                                <p>Livraison terminé.</p>
-                                                                                <a href="#"><i className="fa fa-trash-o " /></a>
-                                                                            </div>
-                                                                        </li>
-                                                                        <li>
-                                                                            <div>
-                                                                                <small>12:03:28 12-04-2014</small>
-                                                                                <h4>Livraison</h4>
-                                                                                <p>Livraison terminé.</p>
-                                                                                <a href="#"><i className="fa fa-trash-o " /></a>
-                                                                            </div>
-                                                                        </li>
                                                                     </ul></div></div></div>
                                                     </div>
                                                     <div className="tab-pane " id="tab-3">

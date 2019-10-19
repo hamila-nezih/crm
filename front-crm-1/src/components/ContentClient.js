@@ -75,22 +75,19 @@ class ContentClient extends Component {
     let clients = this.state.clients.map((client) => {
       return (
         <tr className="gradeA" key={client.id}>
-          <td>{client.id}</td>
+          <td>{client.intitule}</td>
           <td>{client.telephone}</td>
           <td>{client.email}</td>
           <td>{client.type}</td>
-          <td className="center">{client.adresse}</td>
           <td className="center">{client.zone}</td>
+          <td className="center">{client.adresse}</td>          
           <td align="center">
          
             <Link  type="button" className="btn btn-outline btn-primary btn-xs" to={`/detailClient`}
                onClick={() => this.handleDetail(client.id)} >
               <span aria-hidden="true" > Détail</span>
             </Link >
-            <button  className="btn btn-outline btn-danger btn-xs demo4" 
-              onClick={() => this.handleDelete(client.id)} style={{ marginLeft: '15px' }}>
-              <i className="fa fa-trash" aria-hidden="true"></i>
-            </button>
+           
           </td>
         </tr>
       )
@@ -105,7 +102,7 @@ class ContentClient extends Component {
                 <a type="button" className="btn btn-primary" href="nouveauClient" >Nouveau Client</a>
               </div>
               <div className="ibox-content">
-                <div className="table-responsive">
+                <div className="table">
                   <table className="table table-striped table-bordered table-hover dataTables-example">
                     
                     <thead>

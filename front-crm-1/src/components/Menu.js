@@ -9,7 +9,7 @@ class Menu extends Component {
                 <ul className="nav metismenu" id="side-menu">
                   <li className="nav-header">
                     <div className="dropdown profile-element"> <span>
-                        <img alt="image" className="img-circle" src="img/profile_small.jpg" />
+                        <img alt="image" className="img-circle img-md" src="img/image-profil.jpg" />
                       </span>
                       <a data-toggle="dropdown" className="dropdown-toggle" href="#">
                         <span className="clear"> <span className="block m-t-xs"> <strong className="font-bold">Star Tec</strong>
